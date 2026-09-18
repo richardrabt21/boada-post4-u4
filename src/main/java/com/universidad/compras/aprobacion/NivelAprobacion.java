@@ -32,10 +32,11 @@ public abstract class NivelAprobacion {
         return true;
     }
 
+    // El nivel decide y registra quién resolvió. El cambio de estado NO se hace aquí:
+    // lo realiza ServicioAprobacionEnCadena a través del publicador de cambios de estado.
     private ResultadoAprobacion resolver(Solicitud solicitud) {
         boolean aprobada = apruebaLaSolicitud(solicitud);
         solicitud.setNivelResolutor(getNombre());
-        solicitud.setEstado(aprobada ? "APROBADA" : "RECHAZADA");
         String detalle = (aprobada ? "Aprobada por " : "Rechazada por ") + getNombre();
         return new ResultadoAprobacion(aprobada, getNombre(), detalle);
     }

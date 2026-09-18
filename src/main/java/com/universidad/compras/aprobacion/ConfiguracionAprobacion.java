@@ -1,5 +1,6 @@
 package com.universidad.compras.aprobacion;
 
+import com.universidad.compras.notificacion.PublicadorCambiosEstado;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -7,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 public class ConfiguracionAprobacion {
 
     @Bean
-    public ServicioAprobacion servicioAprobacion() {
+    public ServicioAprobacion servicioAprobacion(PublicadorCambiosEstado publicador) {
         NivelAprobacion cumplimiento = new RevisorCumplimientoNormativo();
 
         cumplimiento
@@ -15,6 +16,6 @@ public class ConfiguracionAprobacion {
                 .setSiguiente(new GerenteArea())
                 .setSiguiente(new DirectorFinanciero());
 
-        return new ServicioAprobacionEnCadena(cumplimiento);
+        return new ServicioAprobacionEnCadena(cumplimiento, publicador);
     }
 }
