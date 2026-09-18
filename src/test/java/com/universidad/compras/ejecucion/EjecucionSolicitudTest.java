@@ -1,16 +1,23 @@
 package com.universidad.compras.ejecucion;
 
 import com.universidad.compras.modelo.Solicitud;
+import com.universidad.compras.notificacion.EventoCambioEstado;
+import com.universidad.compras.notificacion.PublicadorCambiosEstado;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class EjecucionSolicitudTest {
 
+    private EjecutorSolicitudes crearEjecutor(PublicadorCambiosEstado publicador) {
+        return new EjecutorSolicitudes(new PresupuestoService(), new OrdenCompraService(), publicador);
+    }
+
     private EjecutorSolicitudes crearEjecutor() {
-        return new EjecutorSolicitudes(new PresupuestoService(), new OrdenCompraService());
+        return crearEjecutor(new PublicadorCambiosEstado(List.of()));
     }
 
     @Test
@@ -66,5 +73,22 @@ class EjecucionSolicitudTest {
         List<Comando> historial = ejecutor.historial(s);
         assertEquals(1, historial.size());
         assertInstanceOf(GenerarOrdenCompraComando.class, historial.get(0));
+    }
+
+    @Test
+    void ejecutarYDeshacerPublicanLosCambiosDeEstado() {
+        PublicadorCambiosEstado publicador = new PublicadorCambiosEstado(List.of());
+        List<EventoCambioEstado> recibidos = new ArrayList<>();
+        publicador.suscribir(evento -> recibidos.add(evento));
+        EjecutorSolicitudes ejecutor = crearEjecutor(publicador);
+        Solicitud s = new Solicitud("S-014", "ana@udes.edu.co", 3000000, "SOFTWARE", "CC-100");
+        s.setEstado("APROBADA");
+
+        ejecutor.ejecutar(s, "Proveedor Uno");
+        ejecutor.deshacerUltimaOperacion(s);
+
+        assertEquals(2, recibidos.size());
+        assertEquals("EJECUTADA", recibidos.get(0).estadoNuevo());
+        assertEquals("APROBADA", recibidos.get(1).estadoNuevo());
     }
 }

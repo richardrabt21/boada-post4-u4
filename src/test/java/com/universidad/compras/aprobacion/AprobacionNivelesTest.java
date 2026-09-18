@@ -1,14 +1,20 @@
 package com.universidad.compras.aprobacion;
 
 import com.universidad.compras.modelo.Solicitud;
+import com.universidad.compras.notificacion.EventoCambioEstado;
+import com.universidad.compras.notificacion.PublicadorCambiosEstado;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class AprobacionNivelesTest {
 
     private ServicioAprobacion crearServicio() {
-        return new ConfiguracionAprobacion().servicioAprobacion();
+        PublicadorCambiosEstado publicador = new PublicadorCambiosEstado(List.of());
+        return new ConfiguracionAprobacion().servicioAprobacion(publicador);
     }
 
     @Test
@@ -20,6 +26,7 @@ class AprobacionNivelesTest {
 
         assertTrue(r.isAprobada());
         assertEquals("Supervisor de Área", r.getNivelResolutor());
+        assertEquals("APROBADA", s.getEstado());
     }
 
     @Test
@@ -41,5 +48,20 @@ class AprobacionNivelesTest {
         ResultadoAprobacion r = servicio.evaluar(s);
 
         assertEquals("Revisor de Cumplimiento Normativo", r.getNivelResolutor());
+    }
+
+    @Test
+    void laEvaluacionPublicaElCambioDeEstado() {
+        PublicadorCambiosEstado publicador = new PublicadorCambiosEstado(List.of());
+        List<EventoCambioEstado> recibidos = new ArrayList<>();
+        publicador.suscribir(evento -> recibidos.add(evento));
+        ServicioAprobacion servicio = new ConfiguracionAprobacion().servicioAprobacion(publicador);
+        Solicitud s = new Solicitud("S-004", "ana@udes.edu.co", 1000000, "SOFTWARE", "CC-100");
+
+        servicio.evaluar(s);
+
+        assertEquals(1, recibidos.size());
+        assertEquals("PENDIENTE", recibidos.get(0).estadoAnterior());
+        assertEquals("APROBADA", recibidos.get(0).estadoNuevo());
     }
 }
